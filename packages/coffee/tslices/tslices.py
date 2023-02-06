@@ -29,10 +29,8 @@ TimeSlice objects should contain all information needed to interperet the
 values of the functions being numerically evolved. In particular, aim to ensure
 that you can restart a simulation if given a timeslice, system and solver.
 """
-from __future__ import division
 
 from builtins import object
-from past.utils import old_div
 import abc
 import logging
 import numpy as np
@@ -264,7 +262,7 @@ class ABCTimeSlice(with_metaclass(abc.ABCMeta, object)):
     
     def __div__(self, other):
         try:
-            rv = old_div(self.data, other)
+            rv = self.data / other
         except:
             raise NotImplementedError(
                 "Division of %s and %s is not implemented"
