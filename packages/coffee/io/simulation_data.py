@@ -14,7 +14,6 @@ from builtins import zip
 from builtins import map
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 import functools
 import h5py
@@ -605,7 +604,7 @@ class Sim(object):
         times = self.getDgType('time')
         times.rV = True
         numOfFrames = len(times)
-        frameSkip = int(old_div(numOfFrames,(animationLength*framesPerSec)))
+        frameSkip = int(numOfFrames / (animationLength*framesPerSec))
 
         # Get data for scri            
         scrif = self.getDgType('scrif')
@@ -826,7 +825,7 @@ class SimulationHDF(object):
         time_dg = times_dg[indices[0]]
         if indices[1] - indices[0] == 1:
             dt = times_dg[indices[1]][()]-time_dg[()]
-            if t<=time_dg[()]<t+old_div(dt,2):
+            if t<=time_dg[()]<t+0.5*dt:
                 return indices[0]
         else:
             if abs(time_dg[(0)] - t) <= NUMERICAL_TOLERANCE:
@@ -837,7 +836,7 @@ class SimulationHDF(object):
             time_dg = times_dg[indices[i]]
             if indices[i+1] - indices[i] == 1:
                 dt = times_dg[indices[i+1]][()]-time_dg[()]
-                if t-old_div(dt,2)<=time_dg[()]<t+old_div(dt,2):
+                if t-0.5*dt<=time_dg[()]<t+0.5*dt:
                     return indices[i]
             else:
                 if abs(time_dg[(0)] - t) <= NUMERICAL_TOLERANCE:
@@ -847,7 +846,7 @@ class SimulationHDF(object):
         time_dg = times_dg[indices[i]]
         if indices[i] - indices[i-1] == 1:
             dt = time_dg[()] - times_dg[indices[i-1]]
-            if t-old_div(dt,2)<=time_dg[()]<=t:
+            if t-0.5*dt<=time_dg[()]<=t:
                 return indices[i]
         else:
             if abs(time_dg[(0)] - t) <= NUMERICAL_TOLERANCE:
