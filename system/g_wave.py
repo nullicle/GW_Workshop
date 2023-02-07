@@ -10,18 +10,12 @@ Copyright (c) 2022 University of Canterbury. All rights reserved.
 """
 
 import numpy as np
-import math
 from mpi4py import MPI
 from functools import partial
 
-from coffee.ibvp import IBVP
-from coffee.grid import UniformCart
-from coffee.solvers import RungeKutta4
 from coffee.tslices import tslices
 from coffee.system import System
-from coffee.diffop.sbp import sbp
 from coffee.diffop.fd import ghost_point_processor
-from coffee import actions
 
 rt2 = np.sqrt(2.)
 r2 = 1./np.sqrt(2.)
@@ -29,7 +23,6 @@ r2 = 1./np.sqrt(2.)
 def kpbump_pol(a, t, p):
 	area   = 1.
 	b      = 35.*np.pi*a / (128.*area)
-	nbumps = len(p)
 
 	for i in range(0,len(p)):
 		if (b*t < (i+1)*np.pi):
@@ -43,30 +36,20 @@ class G_wave(System):
 	################################
 
 	def __init__(self, D, tau, global_z, CFL = 0.5, amplitude = 1.0, \
-				A = 1, initialCond = False, \
-				numvar=15, constraints = None, pl = None, pr = None):
+				A = 1, pl = None, pr = None):
 		super(G_wave, self).__init__()
 		self.CFL = CFL
 		self.D = D
 		self.tau = tau
 		self.name = "Colliding G-waves"
 		self.amplitude = amplitude
-		self.numvar=numvar
 		self.F = None
 		self.A = A
-
-		self.constraints = constraints
 
 		self.global_z = global_z
 
 		self.pol_l = pl
 		self.pol_r = pr
-
-		# Place holders not used for anything
-		self.max_char = 1
-		self.regrid = False
-		self.reparam_indices = None
-		self.regridtype = -1
 
 	def updateMaxChar(self, U):
 		return
@@ -95,23 +78,6 @@ class G_wave(System):
 		pi = 0.
 		psi2 = sigma*sigmap - rho*rhop
 
-		########################################################################
-		# F = 0 START
-		########################################################################
-
-		# F  = self.F[0]
-		# Fb = self.F[1]
-		# Fd = self.F[2]
-		# Fp = self.F[3]
-
-		########################################################################
-		# F = 0 STOP
-		########################################################################
-
-		########################################################################
-		# F where dB/dt = 0 START
-		########################################################################
-
 		f = fp = fd = 0.
 
 		chi  = rhop - rho
@@ -125,63 +91,6 @@ class G_wave(System):
 		Fp = chip + 1.j*fp
 
 		self.F = np.array([F, Fb, Fd, Fp])
-
-		########################################################################
-		# F where dB/dt = 0 STOP
-		########################################################################
-
-		########################################################################
-		# F where F = \chi START
-		########################################################################
-
-		# one = np.ones_like(A)
-		# zro = np.zeros_like(A)
-
-		# f = fp = fd = 0.
-
-		# chi  = zro
-		# chip = zro
-		# chid = zro
-
-		# F  = chi + 1.j*f
-		# Fb = chi - 1.j*f
-		# Fd = chid + 1.j*fd
-		# Fp = chip + 1.j*fp
-
-		# self.F = np.array([F, Fb, Fd, Fp])
-
-		################################################################
-		# F where F = \chi STOP
-		################################################################
-
-		################################################################
-		# F where \epsilon = 0
-		################################################################
-
-		# sigmab  = np.conj(sigma)
-		# sigmapb = np.conj(sigmap)
-		# mub     = np.conj(mu)
-
-		# F  = mu - rho + rhop
-		# Fb = np.conj(F)
-		# Fd = 0.5 * (1. + B)**(-1.) * ((-2.) * A * self.D(F, dz) + 2. * \
-		# 	np.sqrt(2.) * sigma * ((-1.) * sigmab + sigmap) + np.sqrt(2.) * \
-		# 	((-1.) * F**2. + (-4.) * F * rho + (-6.) * (pi + rho**2.) + \
-		# 	mu**2. + mu * rho) + np.sqrt(2.) * (((-1.) * F + (-2.) * rho) * Fb + \
-		# 	(2. * F + 6. * rho + mu + mub) * rhop + rho * mub) + np.sqrt(2.) * mu \
-		# 	* mub)
-		# Fp = 0.5 * A**(-1.) * ((-1.) * np.sqrt(2.) * sigmapb * sigmap + \
-		# 	np.sqrt(2.) * ((-1.) * B * sigmapb * sigmap + ((-1.) + B) * sigma * \
-		# 	sigmab + rhop * ((-1.) * (1. + 3. * B) * rhop + 4. * rho + B * F + \
-		# 	mu)) + np.sqrt(2.) * ((-6.) * pi + rho * ((-1.) * rho + 3. * B * \
-		# 	rho + B * F + mu)) + np.sqrt(2.) * B * Fb * (rho + rhop) + \
-		# 	np.sqrt(2.) * mub * (rho + rhop) + 2. * A * self.D(mu, dz))
-
-		# self.F = np.array([F, Fb, Fd, Fp])
-
-		################################################################
-		# F where \epsilon = 0 STOP
-		################################################################
 
 		# Evaluate right hand side
 		dA = (A*(mu + mub)) / rt2
@@ -213,9 +122,6 @@ class G_wave(System):
 				   etab*(sigma + sigmapb)) / rt2
 		dxi  = (xi*(F - Fb + rho + rhop) + \
 				  xib*(sigma + sigmapb)) / rt2
-		
-		detab = np.conjugate(deta)
-		dxib  = np.conjugate(dxi)
 
 		u_prime = self.D(u, dz)
 		v_prime = self.D(v, dz)
@@ -254,12 +160,7 @@ class G_wave(System):
 				dpsi4[:pt_l_shape]  -= C_left * (psi4[0] - l_psi4)
 				du[:pt_l_shape]     -= C_left * (u[0] - l_u)
 
-		# now all time derivatives are computed
-		# package them into a time slice and return
-		# if (z[-1] == 1):
-			# test = u[200] - v[200]
-			# print("t=%.16f %.16f %.16f %.16f" % (t, u[200], v[200], test))
-			# print("t=%.16f" % t)
+		print(t)
 
 		return tslices.TimeSlice([dA, dB, dmu, drho, drhop, dsigma, \
 									  dsigmap, dpsi0, dpsi4, du, dv, dxi, \
@@ -268,7 +169,6 @@ class G_wave(System):
 
 	def initial_data(self, t0, grid):
 
-		pi  = 0.
 		z   = grid.meshes[0]
 		dz  = np.fabs(z[1]-z[0])
 		one = np.ones_like(z)
@@ -291,10 +191,6 @@ class G_wave(System):
 		xi     = (A / rt2) + 0.j
 		eta    = A*1.j / rt2
 		
-		################################################################
-		# F where dB/dt = 0 START
-		################################################################
-
 		f = fp = fd = 0.
 
 		sigmab  = np.conjugate(sigma)
@@ -313,69 +209,9 @@ class G_wave(System):
 
 		self.F = np.array([F, Fb, Fd, Fp])
 
-		################################################################
-		# F where dB/dt = 0 STOP
-		################################################################
-
-		################################################################
-		# F where F = \chi START
-		################################################################
-
-		# f = fp = fd = 0.
-
-		# chi  = zro
-		# chip = zro
-		# chid = zro
-
-		# F  = chi + 1.j*f
-		# Fb = chi - 1.j*f
-		# Fd = chid + 1.j*fd
-		# Fp = chip + 1.j*fp
-
-		# self.F = np.array([F, Fb, Fd, Fp])
-
-		################################################################
-		# F where F = \chi STOP
-		################################################################
-
-		################################################################
-		# F where \epsilon = 0
-		################################################################
-
-		# sigmab  = np.conj(sigma)
-		# sigmapb = np.conj(sigmap)
-		# mub     = np.conj(mu)
-
-		# F  = mu - rho + rhop
-		# Fb = np.conj(F)
-		# Fd = 0.5 * (1. + B)**(-1.) * ((-2.) * A * self.D(F, dz) + 2. * \
-		# 	np.sqrt(2.) * sigma * ((-1.) * sigmab + sigmap) + np.sqrt(2.) * \
-		# 	((-1.) * F**2. + (-4.) * F * rho + (-6.) * (pi + rho**2.) + \
-		# 	mu**2. + mu * rho) + np.sqrt(2.) * (((-1.) * F + (-2.) * rho) * Fb + \
-		# 	(2. * F + 6. * rho + mu + mub) * rhop + rho * mub) + np.sqrt(2.) * mu \
-		# 	* mub)
-		# Fp = 0.5 * A**(-1.) * ((-1.) * np.sqrt(2.) * sigmapb * sigmap + \
-		# 	np.sqrt(2.) * ((-1.) * B * sigmapb * sigmap + ((-1.) + B) * sigma * \
-		# 	sigmab + rhop * ((-1.) * (1. + 3. * B) * rhop + 4. * rho + B * F + \
-		# 	mu)) + np.sqrt(2.) * ((-6.) * pi + rho * ((-1.) * rho + 3. * B * \
-		# 	rho + B * F + mu)) + np.sqrt(2.) * B * Fb * (rho + rhop) + \
-		# 	np.sqrt(2.) * mub * (rho + rhop) + 2. * A * self.D(mu, dz))
-
-		# self.F = np.array([F, Fb, Fd, Fp])
-
-		################################################################
-		# F where \epsilon = 0 STOP
-		################################################################
-
 		data = [A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta]
 
-		temp_tslice = tslices.TimeSlice(data, grid, t0)
-		if self.constraints:
-			cv          = self.constraint_violation(temp_tslice)
-			tslice      = tslices.TimeSlice(data, grid, time = t0, cv = cv)
-			return tslice
-		else:
-			return temp_tslice
+		return tslices.TimeSlice(data, grid, t0)
 
 	def timestep(self, U):
 
@@ -417,11 +253,6 @@ class G_wave(System):
 		etab = np.conjugate(eta)
 		xib  = np.conjugate(xi)
 
-		# F  = self.F[0]
-		# Fb = self.F[1]
-		# Fd = self.F[2]
-		# Fp = self.F[3]
-
 		f = fp = fd = 0.
 
 		chi  = rhop - rho
@@ -434,11 +265,6 @@ class G_wave(System):
 		Fb = chi - 1.j*f
 		Fd = chid + 1.j*fd
 		Fp = chip + 1.j*fp
-
-		# F  = np.zeros_like(A)
-		# Fb = np.zeros_like(A)
-		# Fd = np.zeros_like(A)
-		# Fp = np.zeros_like(A)
 
 		Dr_rho    = self.D(rho, dz)
 		Dr_rhop   = self.D(rhop, dz)

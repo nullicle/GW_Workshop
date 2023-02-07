@@ -169,7 +169,6 @@ for i in range(num_of_grids):
         CFL = CFLs[i], 
         amplitude = amplitudes[i],
         A=args.A,
-        initialCond = args.i, constraints = args.c,
         pl = args.pl, pr = args.pr
         )]
 # Configuration of IBVP

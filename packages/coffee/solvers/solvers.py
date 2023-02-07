@@ -9,7 +9,6 @@ operated on by numerically (e.g. addition, multiplication, subtraction).
 """
 
 from builtins import object
-import math
 import logging
 import abc
 
