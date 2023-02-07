@@ -230,7 +230,7 @@ class ABCBoundary(with_metaclass(abc.ABCMeta, object)):
         # This implicitly assumes that the number of dimensions handled by
         # the grid object is the same as than managed by the mpi_comm
         dims = self.mpi_comm.Get_dim()
-        if __debug__:
+        if False:
             self.log.debug("Shape = " + repr(shape))
         neg_slices = [
             (i, -1, self.external_slice(shape, i, -1)) 
@@ -242,7 +242,7 @@ class ABCBoundary(with_metaclass(abc.ABCMeta, object)):
             for i in range(dims)
             if self.external_slice(shape, i , 1) != self._empty_slice(len(shape))
         ]
-        if __debug__:
+        if False:
             self.log.debug("external slices are = " + repr(pos_slices + neg_slices))
         return pos_slices + neg_slices
  
@@ -602,7 +602,7 @@ class ABCGrid(with_metaclass(abc.ABCMeta, object)):
 
         See ABCBoundary.external_slices() for documentation.
         """
-        if __debug__:
+        if False:
             self.log.debug("In grid.external_slices")
         return self.boundary_data.external_slices(data_shape)
 

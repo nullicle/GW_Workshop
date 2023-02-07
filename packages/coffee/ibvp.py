@@ -100,14 +100,14 @@ class IBVP:
 		self.log.info("Running system %s"%str(self.theSystem))
 		self.log.info("Grid = %s"%str(self.theGrid))
 		self.log.info("Stepsizes = %s"%repr(u.domain.step_sizes))
-		if __debug__:    
+		if False:    
 			self.log.debug("self.actions is %s"%repr(self.theActions))
 			self.log.debug("Initial data is = %s"%repr(u))
 
 		advance = self.theSolver.advance
 		computation_valid = True
 		while(computation_valid and t < tstop):
-			if __debug__:
+			if False:
 				self.log.debug("Beginning new iteration")
 
 			# Check against maxIteration
@@ -139,13 +139,13 @@ class IBVP:
 					)
 					tstop = thits.pop()
 			
-			if __debug__: 
+			if False: 
 				self.log.debug("Using timestep dt = %f"%dt)
 		   
 			# Run the actions.
 			self._run_actions(t, u)
 
-			if __debug__:
+			if False:
 				self.log.debug(
 					"About to advance for iteration = %i"%self.iteration
 				)
@@ -191,7 +191,7 @@ class IBVP:
 
 			# On to the next iteration.
 			self.iteration+=1
-			if __debug__:
+			if False:
 				self.log.debug("time slice after advance = %s"%repr(u))
 
 		# end (while)
@@ -226,11 +226,11 @@ class IBVP:
 		# actions that will run. Because of single process access to
 		# actions this causes an issue.
 		# Some thought is required to fix this problem.
-		if __debug__:
+		if False:
 			self.log.debug("Running actions")
 		tslice = u.collect_data()
 		if tslice is not None:
-			if __debug__:
+			if False:
 				self.log.debug(
 					"tslice is not None. Computing if actions will run"
 					)
@@ -239,17 +239,17 @@ class IBVP:
 				for action in self.theActions
 				]
 			if any(actions_do_actions):
-				if __debug__:
+				if False:
 					self.log.debug("Some actions will run")
 				for i, action in enumerate(self.theActions):
 					if actions_do_actions[i]:
-						if __debug__:
+						if False:
 							self.log.debug(
 								"Running action %s at iteration %i"%\
 								 (str(action), self.iteration)
 								 )
 						action(self.iteration, tslice)
-			if __debug__:
+			if False:
 				self.log.debug("All actions done")
 				
 

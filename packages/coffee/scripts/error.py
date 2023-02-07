@@ -58,7 +58,7 @@ def exact(args):
                 #needed for fixing domain size to smallest domain. 
                 #This will cause
                 #problems when plotting.
-                #if __debug__:
+                #if False:
                     #print "Index for smallest_domain is %i at time %f"%(
                         #smallest_it, time)
                     #print "smallest domain is: %s"%repr(smallest_domain)
@@ -71,7 +71,7 @@ def exact(args):
                     #for smallaxis, axis in
                     #zip(smallest_domain, domain)
                     #]
-                #if __debug__: print "Mapping = "+str(axes_mappings)
+                #if False: print "Mapping = "+str(axes_mappings)
                 
                 #Calculating difference in values of common domains
                 
@@ -88,7 +88,7 @@ def exact(args):
                 error = np.absolute(
                     sim.raw[it] - sim.exact[it]
                     )
-                if __debug__:
+                if False:
                     print("Errors are: %s"%repr(error))
                 sim.write(sd.dgTypes["errorExa"], it, error)
                 
@@ -161,7 +161,7 @@ def numer(args):
             print("Subtrahend time = %f at index = %i"%\
                 (subtrahend.time[subtrahend_index],subtrahend_index))
             subtrahend_domain = subtrahend.domain[subtrahend_index]
-            if __debug__: 
+            if False: 
                 print("Subtrahend domain = %s"%str(subtrahend_domain))
             
             # Need to collect the same information for each minuend and do the
@@ -176,7 +176,7 @@ def numer(args):
                     
                 #Comparing domains
                 minuend_domain = minuend.domain[minuend_index]
-                if __debug__: print("Minuend domain = %s"%str(minuend_domain))
+                if False: print("Minuend domain = %s"%str(minuend_domain))
                 
 #                # Get the mapping between the domains.
 #                compare_on_axes = True
@@ -193,7 +193,7 @@ def numer(args):
                     for minuend_axis, subtrahend_axis in
                     zip(minuend_domain, subtrahend_domain)
                     ]
-                if __debug__: print("Mapping = "+str(axes_mappings))
+                if False: print("Mapping = "+str(axes_mappings))
                 
                 for dgType in args.dg:
                     print("Calculating error for dgType %s"%dgType)

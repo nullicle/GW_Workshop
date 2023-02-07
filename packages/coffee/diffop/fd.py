@@ -23,14 +23,14 @@ import logging
 def ghost_point_processor(data, b_values, log=None):
     """A utility function that understands how data defined over ghost points
     for finite difference stencils should be handled when communicated via MPI."""
-    if __debug__ and log:
+    if False and log:
         log.debug("original data is " + repr(data))
     for b_slice, b_data in b_values:
-        if __debug__ and log:
+        if False and log:
             log.debug("b_slice is %s"%(repr(b_slice)))
             log.debug("b_data is %s"%(repr(b_data)))
         data[b_slice] = b_data
-    if __debug__ and log:
+    if False and log:
         log.debug("new data is " + repr(data))
 
 
@@ -251,7 +251,7 @@ class FD_diffop(object):
         """
         ru = self.central(u)
         for i,b in self.boundaries:
-            if __debug__:
+            if False:
                 self.log.debug(
                     "Applying boundary: i = " + repr(i) + ", b = " + repr(b)
                 )

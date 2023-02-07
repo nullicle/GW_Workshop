@@ -261,13 +261,13 @@ class sfpy_salm(np.ndarray):
         """
         #check object types and delegate addition if not sfpy_salm
         if not isinstance(other, sfpy_salm):
-            if __debug__:
+            if False:
                 self.log.debug("self is = %s"%repr(self))
                 self.log.debug("other is = %s"%repr(other))
                 self.log.debug("self.spins is = %s"%repr(self.spins))
                 self.log.debug("self.lmax is = %s"%repr(self.lmax))
             if add:
-                if __debug__:
+                if False:
                     self.log.debug("self.view(np.adarray) + other = %s"%
                         repr(self.view(np.ndarray) + other)
                         )
@@ -279,7 +279,7 @@ class sfpy_salm(np.ndarray):
                     self.bl_mult
                     )
             else:
-                if __debug__:
+                if False:
                     self.log.debug("self.view(np.adarray) - other = %s"%
                         repr(self.view(np.ndarray) - other)
                         )

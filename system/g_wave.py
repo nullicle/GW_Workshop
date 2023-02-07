@@ -20,6 +20,7 @@ from coffee.diffop.fd import ghost_point_processor
 rt2 = np.sqrt(2.)
 r2 = 1./np.sqrt(2.)
 
+# The wave profiles
 def kpbump_pol(a, t, p):
 	area   = 1.
 	b      = 35.*np.pi*a / (128.*area)
@@ -31,9 +32,9 @@ def kpbump_pol(a, t, p):
 
 class G_wave(System):
 
-	################################
+	############################################################################
 	# Constructor
-	################################
+	############################################################################
 
 	def __init__(self, D, tau, global_z, CFL = 0.5, amplitude = 1.0, \
 				A = 1, pl = None, pr = None):
@@ -51,33 +52,38 @@ class G_wave(System):
 		self.pol_l = pl
 		self.pol_r = pr
 
-	def updateMaxChar(self, U):
-		return
-
-	def left(self, t, U):# u=0 psi4
-		u = t / rt2 # Minkowski
+	def left(self, t):
+		u = t / rt2
 
 		return u, kpbump_pol(self.amplitude, u, self.pol_l)
 
-	def right(self, t, U): # v=0 psi0
-		v = t / rt2 # Minkowski
+	def right(self, t):
+		v = t / rt2
 		return v, kpbump_pol(self.amplitude, v, self.pol_r)
 
-	def evaluate(self, t, U, intStep = None):
+	def evaluate(self, t, U):
 
-		# Define useful variables
+		# Define the system variables
 		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta = U.data
 
+		# Read in the grid and grid spacing
 		z  = U.domain.axes[0]
 		dz = U.domain.step_sizes[0]
+
+		# Compute complex conjugates
 		mub     = np.conjugate(mu)
 		sigmab  = np.conjugate(sigma)
 		sigmapb = np.conjugate(sigmap)
 		etab    = np.conjugate(eta)
 		xib     = np.conjugate(xi)
+		
+		# The trace of energy-momentum tensor
 		pi = 0.
+
+		# \psi_2 can be written in terms of spin-coefficients in plane symmetry
 		psi2 = sigma*sigmap - rho*rhop
 
+		# Gauge quantities
 		f = fp = fd = 0.
 
 		chi  = rhop - rho
@@ -92,7 +98,7 @@ class G_wave(System):
 
 		self.F = np.array([F, Fb, Fd, Fp])
 
-		# Evaluate right hand side
+		# Evaluate right hand side of the evolution equations
 		dA = (A*(mu + mub)) / rt2
 		dB = (F + Fb + B*(mu + mub) + 2.*(rho - rhop)) / rt2
 		dmu = (-np.power(F,2.) + np.power(mu,2.) - 6.*pi - 3.*F*rho + mu*rho - \
@@ -111,25 +117,26 @@ class G_wave(System):
 					   sigmap*(-3.*F - rho + Fb + \
 									4.*rhop)) / rt2
 
-		dzpsi0 = self.D(psi0, dz)
+		# Compute spatial derivatives
+		dzpsi0  = self.D(psi0, dz)
+		dzpsi4  = self.D(psi4,dz)
+		u_prime = self.D(u, dz)
+		v_prime = self.D(v, dz)
 
 		dpsi0 = (-6.*sigma*psi2 + 2.*psi0*(-2.*(F + mu + rho) + rhop) - \
 					  rt2*A*dzpsi0) / (rt2*(B - 1.))
 		dpsi4 = (-2.*psi4*(2.*F - 2.*mu + rho - 2.*rhop) + \
-					  6.*psi2*sigmap - rt2*A*self.D(psi4,dz)) / (rt2*(B + 1.))
+					  6.*psi2*sigmap - rt2*A*dzpsi4) / (rt2*(B + 1.))
 
 		deta = (eta*(F - Fb + rho + rhop) + \
 				   etab*(sigma + sigmapb)) / rt2
 		dxi  = (xi*(F - Fb + rho + rhop) + \
 				  xib*(sigma + sigmapb)) / rt2
 
-		u_prime = self.D(u, dz)
-		v_prime = self.D(v, dz)
-
 		du = -A*u_prime / (1. + B) 
 		dv =  A*v_prime / (1. - B) 
 
-		# Impose boundary conditions
+		# Communicate data across processes
 		new_derivatives, _ = U.communicate(
 			partial(ghost_point_processor),
 			data=np.array([
@@ -140,6 +147,7 @@ class G_wave(System):
 		dA, dB, dmu, drho, drhop, dsigma, dsigmap, dpsi0, dpsi4, du, dv, \
 			dxi, deta = new_derivatives
 
+		# Impose data using the SAT method
 		pt_r = self.D.penalty_boundary(dz, "right")
 		pt_l = self.D.penalty_boundary(dz, "left")
 		pt_r_shape = pt_r.size
@@ -148,8 +156,8 @@ class G_wave(System):
 		C_left  = self.tau * pt_l * (-A[0] / (1. + B[0]))
 		C_right = self.tau * pt_r * (A[-1] / (1. - B[-1]))
 
-		l_u , l_psi4 = self.left(t,U)
-		r_v , r_psi0 = self.right(t,U)
+		l_u , l_psi4 = self.left(t)
+		r_v , r_psi0 = self.right(t)
 
 		b_data = U.external_slices()
 		for dim, direction, d_slice in b_data:
@@ -160,8 +168,9 @@ class G_wave(System):
 				dpsi4[:pt_l_shape]  -= C_left * (psi4[0] - l_psi4)
 				du[:pt_l_shape]     -= C_left * (u[0] - l_u)
 
-		print(t)
+		# print(t)
 
+		# Return time derivatives
 		return tslices.TimeSlice([dA, dB, dmu, drho, drhop, dsigma, \
 									  dsigmap, dpsi0, dpsi4, du, dv, dxi, \
 									  deta], \
@@ -169,11 +178,15 @@ class G_wave(System):
 
 	def initial_data(self, t0, grid):
 
+		# Read in grid
 		z   = grid.meshes[0]
 		dz  = np.fabs(z[1]-z[0])
+
+		# Define useful arrays
 		one = np.ones_like(z)
 		zro = np.zeros_like(z)
 
+		# Define initial data
 		A           = self.A*one + 0.j
 		B           = zro + 0.j
 		sigma       = zro + 0.j
@@ -238,21 +251,24 @@ class G_wave(System):
 		return self.CFL * u.domain.step_sizes[0]
 
 	def constraint_violation(self, U):
+
 		# Define useful variables
 		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta = U.data
 
-		z = U.domain.axes[0]
+		# Read in grid spacing
 		dz = U.domain.step_sizes[0]
 
+		# Trace of energy-momentum tensor
 		pi = 0.
 
+		# Compute complex conjugates
 		mub     = np.conjugate(mu)
 		sigmab  = np.conjugate(sigma)
 		sigmapb = np.conjugate(sigmap)
-
 		etab = np.conjugate(eta)
 		xib  = np.conjugate(xi)
 
+		# Gauge quantities
 		f = fp = fd = 0.
 
 		chi  = rhop - rho
@@ -266,6 +282,7 @@ class G_wave(System):
 		Fd = chid + 1.j*fd
 		Fp = chip + 1.j*fp
 
+		# Compute spatial derivatives
 		Dr_rho    = self.D(rho, dz)
 		Dr_rhop   = self.D(rhop, dz)
 		Dr_sigma  = self.D(sigma, dz)

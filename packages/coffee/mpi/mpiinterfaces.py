@@ -116,7 +116,7 @@ class EvenCart(MPIInterface):
                 )
                 for i, coord in enumerate(coords)
             ])]
-        if __debug__:
+        if False:
             self.log.debug("domain_mapping is %s"%r_map)
         return r_map                
     
@@ -154,7 +154,7 @@ class EvenCart(MPIInterface):
             for d in range(dims)
         ]
         neighbours = pos_neighbours + neg_neighbours
-        if __debug__:
+        if False:
             self.log.debug("neighbour_slices is %s"%neighbours)
         return neighbours
 
@@ -193,12 +193,12 @@ class EvenCart(MPIInterface):
             A slice which gives the subdomain for the particular dimension and
             the needed MPI node rank.
         """
-        if __debug__:
+        if False:
             self.log.debug("Calculating start and end indices for subdomain")
             self.log.debug("Array_length is %i"%array_length)
         #divide domain into appropriate parts
         q,r = divmod(array_length, num_ranks)
-        if __debug__:
+        if False:
             self.log.debug("q = %i, r = %i"%(q,r))
         #use the rank to details which part is relevant for this process
         s = rank * q + min(rank, r)
@@ -206,7 +206,7 @@ class EvenCart(MPIInterface):
         #Adjust e to account for min(rank, r) term, which spreads the remainder
         #over the appropriate number of processes
         if rank < r:
-            if __debug__:
+            if False:
                 self.log.debug("rank < r so we add one to end point")
             e = e + 1
         #add in ghost_points if we can
@@ -216,7 +216,7 @@ class EvenCart(MPIInterface):
             s = s - ghost_points_start
         if e + ghost_points_end < array_length:
             e = e + ghost_points_end
-        if __debug__:
+        if False:
             self.log.debug("Start index = %i, End index = %i"%(s,e))
         return slice(s, e, None)
           
@@ -254,13 +254,13 @@ class EvenCart(MPIInterface):
         #if self.comm.size == 1:
             #return []
         nslices = self._neighbour_slices(data.shape, b_data)
-        if __debug__:
+        if False:
             self.log.debug("about to perform communication")
             self.log.debug("nslices = %s"%(repr(nslices)))
             self.log.debug("data is %s"%repr(data))
         r_data = []
         for source, dest, send_slice, recv_slice in nslices:
-            if __debug__:
+            if False:
                 self.log.debug(
                     "source=%d, dest=%d, send_slice=%s, recv_slice=%s"%
                     (source, dest, repr(send_slice), repr(recv_slice))
@@ -282,7 +282,7 @@ class EvenCart(MPIInterface):
                 #when testing the above assertion I suggest changing this
                 #line to np.ones_like, rather than np.empty_like
                 recv_data = np.empty_like(data[recv_slice])
-            if __debug__:
+            if False:
                 self.log.debug("About to sendrecv")
                 self.log.debug("data to be sent is %s"%repr(send_data))
                 self.log.debug("source is %s"%source)
@@ -294,13 +294,13 @@ class EvenCart(MPIInterface):
                 recvbuf=recv_data,
                 source=source
                 )
-            if __debug__:
+            if False:
                 self.log.debug("Received data = %s"%repr(recv_data))
                 self.log.debug("data[0] is %s"%repr(data[0]))
                 self.log.debug("Sendrecv completed")
             if source >= 0:
                 r_data += [(recv_slice, recv_data)]
-        if __debug__:
+        if False:
             self.log.debug("r_data = %s"%repr(r_data))
             self.log.debug("communication complete")
         return r_data
@@ -333,14 +333,14 @@ class EvenCart(MPIInterface):
         if self.comm is None:
             return data
         #Gather the data
-        if __debug__:
+        if False:
             self.log.debug("Data is %s"%repr(data))
         fields = self.comm.gather(data, root = 0)
-        if __debug__:
+        if False:
             self.log.debug("Data has been gathered.")
         #If this process is root then collate the data and return
         if self.comm.rank == 0:
-            if __debug__:
+            if False:
                 self.log.debug("The collected fields have shapes %s"%\
                     repr([f.shape for f in fields]))
             rdata_edims_shape = (data.shape[0],) + data.shape[len(self.domain)+1:]
@@ -348,7 +348,7 @@ class EvenCart(MPIInterface):
                 slice(None,None,None)
                 for i in rdata_edims_shape
                 ])
-            if __debug__:
+            if False:
                 self.log.debug("data.shape is %s"%str(data.shape))
                 self.log.debug(
                     "rdata_shape_edims is %s"%str(rdata_edims_slice)
@@ -362,11 +362,11 @@ class EvenCart(MPIInterface):
                 + rdata_edims_shape[1:],
                 dtype=data.dtype
                 )
-            if __debug__:
+            if False:
                 self.log.debug("rdata.shape = %s"%(repr(rdata.shape)))
             for rank, field in enumerate(fields):
                 dslice = self.domain_mapping[rank]
-                if __debug__:
+                if False:
                     self.log.debug("dslice is %s"%repr(dslice))
                     self.log.debug(
                         "rdata_edims_slice is %s"%repr(rdata_edims_slice)

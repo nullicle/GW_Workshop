@@ -214,7 +214,7 @@ class RungeKutta4(ABCSolver):
         Very simple minded implementation of the standard 4th order Runge-Kutta
         method to solve an ODE of the form fdot = rhs(t,f)
         """
-        if __debug__:
+        if False:
             self.log.debug("In advance")
             self.log.debug("time = %s"%repr(t0))
             self.log.debug("data = %s"%(repr(u0)))
@@ -223,28 +223,28 @@ class RungeKutta4(ABCSolver):
         u = u0
         t = t0
         k = eqn.evaluate(t, u)
-        if __debug__:
+        if False:
             self.log.debug("First evaluate, k = %s"%repr(k))
         u1 = u0 + (dt/6.0)*k
 
         u = u0 + dt/2.0*k
         t = t0 + dt/2.0
         k = eqn.evaluate(t, u)
-        if __debug__:
+        if False:
             self.log.debug("Second evaluate, k = %s"%repr(k))
         u1 += dt/3.0*k
 
         u = u0 + dt/2.0*k
         t = t0 + dt/2.0
         k = eqn.evaluate(t, u)
-        if __debug__:
+        if False:
             self.log.debug("Third evaluate, k = %s"%repr(k))
         u1 += dt/3.0*k
 
         u = u0 + dt*k
         t = t0 + dt
         k = eqn.evaluate(t, u)
-        if __debug__:
+        if False:
             self.log.debug("Fourth evaluate, k = %s"%repr(k))
         u1 += dt/6.0*k
         u1.time = t

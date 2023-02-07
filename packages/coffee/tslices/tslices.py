@@ -109,7 +109,7 @@ class ABCTimeSlice(with_metaclass(abc.ABCMeta, object)):
             The result of a call to self.domain.external_slices(self.data.shape)
 
         """
-        if __debug__:
+        if False:
             self.log.debug("calling self.domain.external_slices")
         return self.domain.external_slices(self.data.shape)
     
@@ -165,7 +165,7 @@ class ABCTimeSlice(with_metaclass(abc.ABCMeta, object)):
         data_all = self.domain.collect_data(self.data)
         domain_all = self.domain.full_grid
         r_tslice = self.__class__(data_all, domain_all, self.time)
-        if __debug__:
+        if False:
             self.log.debug("r_tslice is %s"%(repr(r_tslice)))
         return r_tslice
 

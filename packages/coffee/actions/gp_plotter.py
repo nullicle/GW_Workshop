@@ -88,7 +88,7 @@ class Plotter1D(Prototype):
                 self.datafunc = lambda y,x,z:(x.domain.axes[0], x.data)
         except:
             self.datafunc = lambda y,x,z:(x.domain.axes[0],x.data)
-        if __debug__:
+        if False:
             self.log.debug("Initialising plotter...")
         super(Plotter1D, self).__init__(
             frequency = frequency,
@@ -99,16 +99,16 @@ class Plotter1D(Prototype):
         g = self.Device
         for arg in args:
             g(arg)
-        if __debug__:
+        if False:
             self.log.debug("Done.-")
 
     def _doit(self, it, u):
         g = self.Device
-        if __debug__:
+        if False:
             self.log.debug("Plotting iteration %i with data %s"%(it,str(u)))
         x, f = self.datafunc(it,u,self.system)
         f = np.atleast_2d(f)
-        if __debug__:
+        if False:
             self.log.debug("Data after processing by self.datafunc is %s"%f)
             self.log.debug(
                 "Shape of domain to plot over is %s"%x.shape
@@ -117,7 +117,7 @@ class Plotter1D(Prototype):
         graphs = []
         g("set title '"+self.title%u.time + "'")
         for i, val in enumerate(f):
-            if __debug__:
+            if False:
                 self.log.debug(
                     "Shape of data to be plotted is %s"%val.shape
                     )
@@ -204,21 +204,21 @@ class Plotter2D(Prototype):
         except:
             self.datafunc = lambda y,x,z:(x.domain.axes, x.data)
 
-#        if __debug__:
+#        if False:
 #            self.log.debug("Initialising plotter...")
         self.device = Gnuplot.Gnuplot()
         for arg in args:
             self.device(arg)
         super(Plotter2D, self).__init__(**kwds)
-#        if __debug__:
+#        if False:
 #            self.log.debug("Done.-")
 
     def _doit(self, it, u):
-        if __debug__:
+        if False:
             self.log.debug("Plotting iteration %i with data %s"%(it,str(u)))
         x, f = self.datafunc(it, u, self.system)
         f = np.atleast_2d(f)
-        if __debug__:
+        if False:
             self.log.debug("Data after processing by self.datafunc is %s"%f)
             self.log.debug(
                 "Shape of domain to plot over is (%s,%s)"%
