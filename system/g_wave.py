@@ -5,8 +5,8 @@
 """
 g_wave.py
 
-Created by Chris Stevens 2022
-Copyright (c) 2022 University of Canterbury. All rights reserved.
+Created by Chris Stevens 2023
+Copyright (c) 2023 University of Canterbury. All rights reserved.
 """
 
 import numpy as np
