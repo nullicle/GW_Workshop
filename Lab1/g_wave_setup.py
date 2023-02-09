@@ -23,7 +23,7 @@ from coffee.diffop.sbp import sbp
 
 # Import system
 import g_wave
-import gwave_plotter as gw_plotter
+import g_wave_plotter as gw_plotter
 
 np.set_printoptions(threshold=np.inf, precision=16)
 
@@ -33,7 +33,7 @@ np.set_printoptions(threshold=np.inf, precision=16)
 
 # Initialise parser
 parser = argparse.ArgumentParser(description=\
-"""The Friedrich-Nagy gauge in plane symmetry.""")
+"""The Friedrich-Nagy gauge IBVP in plane symmetry.""")
 
 # Parse files
 parser.add_argument('-f','-file', help=\
@@ -96,7 +96,7 @@ zstop  = 2.
 
 # Times to run between
 tstart = 0.0
-tstop = 1000.
+tstop = 1.
 
 # SAT boundary method parameter
 tau  = 1.0

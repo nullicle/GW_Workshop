@@ -9,8 +9,6 @@ iterative step in an initial boundary value problem solver. However, this class
 is general enough to handle numerical techniques that have, at their highest
 level, some iterative method.
 """
-
-import logging
 import numpy as np
 
 class IBVP:
@@ -61,7 +59,6 @@ class IBVP:
 		self.maxIteration = maxIteration
 		self.theGrid = grid
 		self.theActions = action
-		self.log = logging.getLogger("IBVP")
 		self.minTimestep = minTimestep
 			 
 	def run(self, tstart, tstop = float('inf'), thits = None):
@@ -97,31 +94,19 @@ class IBVP:
 
 		# Get initial data and configure timeslices for multiple processors.
 		u = self.theSystem.initial_data(t, self.theGrid)
-		self.log.info("Running system %s"%str(self.theSystem))
-		self.log.info("Grid = %s"%str(self.theGrid))
-		self.log.info("Stepsizes = %s"%repr(u.domain.step_sizes))
-		if False:    
-			self.log.debug("self.actions is %s"%repr(self.theActions))
-			self.log.debug("Initial data is = %s"%repr(u))
 
 		advance = self.theSolver.advance
 		computation_valid = True
 		while(computation_valid and t < tstop):
-			if False:
-				self.log.debug("Beginning new iteration")
 
 			# Check against maxIteration
 			if self.iteration > self.maxIteration:
-				self.log.warning("Maximum number of iterations exceeded")
 				break
 		   
 			dt = self.theSystem.timestep(u)
 
 			# Check dt for size
 			if dt < self.minTimestep:
-				self.log.error(
-					'Exiting computation: timestep too small dt = %.15f'%dt
-				)
 				break
 			
 			# Check if dt needs to change in order to hit the next thits value.
@@ -129,33 +114,20 @@ class IBVP:
 			if timeleft < dt:
 				dt = timeleft
 				if not thits:
-					self.log.warning(
-							"Final time step: adjusting to dt = %.15f" % dt
-						)
 					computation_valid = False
 				else:
-					self.log.warning(
-						"Forcing evaluation at time %f"%tstop
-					)
 					tstop = thits.pop()
-			
-			if False: 
-				self.log.debug("Using timestep dt = %f"%dt)
 		   
 			# Run the actions.
 			self._run_actions(t, u)
 
-			if False:
-				self.log.debug(
-					"About to advance for iteration = %i"%self.iteration
-				)
 			try:
 				t, u = advance(t, u, dt)
 			except OverflowError as e:
 
 				# OverflowErrors arn't always appropirately handled. So we
 				# do it ourselves here.
-				print("Overflow error({0}): {1}".format(e.errno, e.strerror))
+				# print("Overflow error({0}): {1}".format(e.errno, e.strerror))
 				computation_valid = False
 
 			# If we're using an mpi enable grid, this ensures that all
@@ -191,8 +163,6 @@ class IBVP:
 
 			# On to the next iteration.
 			self.iteration+=1
-			if False:
-				self.log.debug("time slice after advance = %s"%repr(u))
 
 		# end (while)
 
@@ -203,11 +173,7 @@ class IBVP:
 		# processes are about to complete the current simulation before exit
 		# occurs.
 		u.barrier()
-		self.log.info(
-			"Finished computation at time %f for iteration %i"%
-			(t,self.iteration)
-		)
-		return u
+		return
 
 	def _run_actions(self, t, u):
 		"""A utility method that ensures that actions are only run after all data is collected across MPI nodes and only if an action is due to run.
@@ -226,30 +192,13 @@ class IBVP:
 		# actions that will run. Because of single process access to
 		# actions this causes an issue.
 		# Some thought is required to fix this problem.
-		if False:
-			self.log.debug("Running actions")
 		tslice = u.collect_data()
 		if tslice is not None:
-			if False:
-				self.log.debug(
-					"tslice is not None. Computing if actions will run"
-					)
 			actions_do_actions = [
 				action.will_run(self.iteration, tslice) 
 				for action in self.theActions
 				]
 			if any(actions_do_actions):
-				if False:
-					self.log.debug("Some actions will run")
 				for i, action in enumerate(self.theActions):
 					if actions_do_actions[i]:
-						if False:
-							self.log.debug(
-								"Running action %s at iteration %i"%\
-								 (str(action), self.iteration)
-								 )
 						action(self.iteration, tslice)
-			if False:
-				self.log.debug("All actions done")
-				
-
