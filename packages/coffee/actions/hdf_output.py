@@ -196,6 +196,19 @@ class SimOutput(Prototype):
             dg[it] = u.data
             super(SimOutput.Data,self).__call__(it,u)
 
+    class Constraints(SimOutputType):
+        """Writes out tslices.TimeSlice.cv.
+
+        This class assumes that tslice.TimeSlice.cv has a type that h5py
+        understands.
+        """
+        groupname = dgTypes["constraints"]
+
+        def __call__(self,it,u):
+            dg = self.data_group
+            dg[it] = self.parent.system.constraint_violation(u)
+            super(SimOutput.Constraints,self).__call__(it,u)
+
     class Exact(SimOutputType):
         """Calls system.exact_value to write out the exact value of the system.
 

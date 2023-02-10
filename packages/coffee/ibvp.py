@@ -9,6 +9,7 @@ iterative step in an initial boundary value problem solver. However, this class
 is general enough to handle numerical techniques that have, at their highest
 level, some iterative method.
 """
+from coffee.tslices import tslices
 import numpy as np
 
 class IBVP:

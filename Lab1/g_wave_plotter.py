@@ -10,9 +10,11 @@ Copyright (c) 2023 University of Canterbury. All rights reserved.
 """
 
 import numpy as np
-from pylab import *
-import matplotlib
-matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+
+# from IPython import get_ipython
+# get_ipython().run_line_magic('matplotlib', 'notebook')
 
 from coffee.actions import Prototype
 
@@ -27,8 +29,8 @@ class Plotter(Prototype):
             self.system = system
             self.colors = ('b','g','r','c','m','y','k','orange') 
 
-            ion()
-            fig = figure(0,figsize=(10,10))
+            plt.ion()
+            fig = plt.figure(0,figsize=(10,10))
             ax = fig.add_subplot(111)
             self.lines = []
 
@@ -52,7 +54,7 @@ class Plotter(Prototype):
         index = np.asarray(self.index)
         f = u.data[index]
         self.axes.set_title("Iteration: %d, Time: %f" % (it,u.time))
-        ioff()
+        plt.ioff()
         
         C = 2.*(f[0]*f[1]) + 6.*(f[4]*f[5] - f[2]*f[3] + self.cc)**2
         self.lines[0].set_xdata(x)
@@ -82,7 +84,7 @@ class Plotter(Prototype):
 
         self.axes.legend(loc = 'lower center',prop={'size': 24},ncol=3)
 
-        ion()
+        plt.ion()
         plt.figure(0)
-        draw()
+        plt.draw()
         plt.pause(self.delay)

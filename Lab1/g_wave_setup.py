@@ -91,12 +91,12 @@ if args.pr is None:
 N = args.r
 
 # Spatial grid bounds
-zstart = -2.
-zstop  = 2.
+zstart = -1.
+zstop  = 1.
 
 # Times to run between
 tstart = 0.0
-tstop = 1.
+tstop = 1.5
 
 # SAT boundary method parameter
 tau  = 1.0

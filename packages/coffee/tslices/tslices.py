@@ -47,7 +47,7 @@ class ABCTimeSlice(with_metaclass(abc.ABCMeta, object)):
 
     """
  
-    def __init__(self, data, domain, time, name=None, *args, **kwds):
+    def __init__(self, data, domain, time, name=None, cv=None, *args, **kwds):
         """Make a TimeSlice instance!
 
         It is recommended to call this method once your subclass has done

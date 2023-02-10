@@ -168,8 +168,6 @@ class G_wave(System):
 				dpsi4[:pt_l_shape]  -= C_left * (psi4[0] - l_psi4)
 				du[:pt_l_shape]     -= C_left * (u[0] - l_u)
 
-		# print(t)
-
 		# Return time derivatives
 		return tslices.TimeSlice([dA, dB, dmu, drho, drhop, dsigma, \
 									  dsigmap, dpsi0, dpsi4, du, dv, dxi, \
@@ -289,16 +287,6 @@ class G_wave(System):
 		Dr_sigmap = self.D(sigmap, dz)
 		Dr_eta    = self.D(eta, dz)
 		Dr_xi     = self.D(xi, dz)
-
-		# Communicate first derivatives
-		new_derivatives, _ = U.communicate(
-			partial(ghost_point_processor),
-			data=np.array([
-				Dr_rho, Dr_rhop, Dr_sigma, Dr_sigmap, Dr_eta, Dr_xi
-			])
-		)
-
-		Dr_rho, Dr_rhop, Dr_sigma, Dr_sigmap, Dr_eta, Dr_xi = new_derivatives
 
 		# Calculate constraint quantities
 		C1 = ((3.*pi*(B+1.) - rho*(mu - rho + B*(F + 3.*rho)) - \
