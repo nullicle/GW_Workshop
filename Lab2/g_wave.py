@@ -30,6 +30,14 @@ def kpbump_pol(a, t, p):
 			return np.exp(2.j*np.pi*p[i])*a*(np.sin(b*t)**8) * (b*t < (i+1)*np.pi)
 	return 0.
 
+def my_profile(a, t):
+	b = 8.
+	return 0.5*a * (b*t < np.pi)
+
+def my_profile2(a, t):
+	b = 8.
+	return a*np.sin(b*t)**7. * (b*t < 2.*np.pi)
+
 class G_wave(System):
 
 	############################################################################
@@ -53,18 +61,17 @@ class G_wave(System):
 		self.pol_r = pr
 
 	def left(self, t):
-		u = t / rt2
-
-		return u, kpbump_pol(self.amplitude, u, self.pol_l)
+		# return kpbump_pol(self.amplitude, t, self.pol_l)
+		return my_profile2(self.amplitude, t)
 
 	def right(self, t):
-		v = t / rt2
-		return v, kpbump_pol(self.amplitude, v, self.pol_r)
+		# return kpbump_pol(self.amplitude, t, self.pol_r)
+		return my_profile2(self.amplitude, t)
 
 	def evaluate(self, t, U):
 
 		# Define the system variables
-		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta = U.data
+		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, xi, eta = U.data
 
 		# Read in the grid and grid spacing
 		z  = U.domain.axes[0]
@@ -120,8 +127,6 @@ class G_wave(System):
 		# Compute spatial derivatives
 		dzpsi0  = self.D(psi0, dz)
 		dzpsi4  = self.D(psi4,dz)
-		u_prime = self.D(u, dz)
-		v_prime = self.D(v, dz)
 
 		dpsi0 = (-6.*sigma*psi2 + 2.*psi0*(-2.*(F + mu + rho) + rhop) - \
 					  rt2*A*dzpsi0) / (rt2*(B - 1.))
@@ -133,18 +138,15 @@ class G_wave(System):
 		dxi  = (xi*(F - Fb + rho + rhop) + \
 				  xib*(sigma + sigmapb)) / rt2
 
-		du = -A*u_prime / (1. + B) 
-		dv =  A*v_prime / (1. - B) 
-
 		# Communicate data across processes
 		new_derivatives, _ = U.communicate(
 			partial(ghost_point_processor),
 			data=np.array([
 				dA, dB, dmu, drho, drhop, dsigma, dsigmap, dpsi0, dpsi4, \
-				du, dv, dxi, deta
+				dxi, deta
 			])
 		)
-		dA, dB, dmu, drho, drhop, dsigma, dsigmap, dpsi0, dpsi4, du, dv, \
+		dA, dB, dmu, drho, drhop, dsigma, dsigmap, dpsi0, dpsi4, \
 			dxi, deta = new_derivatives
 
 		# Impose data using the SAT method
@@ -156,21 +158,19 @@ class G_wave(System):
 		C_left  = self.tau * pt_l * (-A[0] / (1. + B[0]))
 		C_right = self.tau * pt_r * (A[-1] / (1. - B[-1]))
 
-		l_u , l_psi4 = self.left(t)
-		r_v , r_psi0 = self.right(t)
+		l_psi4 = self.left(t)
+		r_psi0 = self.right(t)
 
 		b_data = U.external_slices()
 		for dim, direction, d_slice in b_data:
 			if direction == 1:
 				dpsi0[-pt_r_shape:] -= C_right * (psi0[-1] - r_psi0)
-				dv[-pt_r_shape:]    -= C_right * (v[-1] - r_v)
 			else:
 				dpsi4[:pt_l_shape]  -= C_left * (psi4[0] - l_psi4)
-				du[:pt_l_shape]     -= C_left * (u[0] - l_u)
 
 		# Return time derivatives
 		return tslices.TimeSlice([dA, dB, dmu, drho, drhop, dsigma, \
-									  dsigmap, dpsi0, dpsi4, du, dv, dxi, \
+									  dsigmap, dpsi0, dpsi4, dxi, \
 									  deta], \
 									  U.domain, time = t)
 
@@ -191,9 +191,6 @@ class G_wave(System):
 		sigmap      = zro + 0.j
 		psi0        = zro + 0.j
 		psi4        = zro + 0.j
-
-		u = ((t0 - (1./A)*(z - self.global_z[0])) / rt2) + 0.j
-		v = ((t0 + (1./A)*(z - self.global_z[-1])) / rt2) + 0.j
 
 		mu     = zro + 0.j
 		rho    = zro + 0.j
@@ -220,7 +217,7 @@ class G_wave(System):
 
 		self.F = np.array([F, Fb, Fd, Fp])
 
-		data = [A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta]
+		data = [A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, xi, eta]
 
 		return tslices.TimeSlice(data, grid, t0)
 
@@ -251,7 +248,7 @@ class G_wave(System):
 	def constraint_violation(self, U):
 
 		# Define useful variables
-		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, u, v, xi, eta = U.data
+		A, B, mu, rho, rhop, sigma, sigmap, psi0, psi4, xi, eta = U.data
 
 		# Read in grid spacing
 		dz = U.domain.step_sizes[0]
